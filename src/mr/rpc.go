@@ -24,6 +24,48 @@ type ExampleReply struct {
 
 // Add your RPC definitions here.
 
+type Register struct {
+	ID string
+}
+
+type RegisterReply struct {
+	WorkerID string
+}
+
+type TaskQuery struct{
+	NodeID string
+}
+
+type TaskQueryReply struct{
+	OK   bool
+	TaskID string
+	TaskType int
+	Files []string
+}
+
+type SubmitTask struct{
+	NodeID string
+	TaskID string
+	FileName string
+}
+
+type SubmitTaskReply struct{
+	OK bool
+}
+
+type HeartBeat struct{
+	TimeStamp int
+	WorkDone bool
+	WorkerID string
+}
+
+type HeartBeatReply struct{
+	WorkTimeOut bool  // 工作是否超时10s
+	Files 	[]string
+	Workas  int
+	TaskID  string
+}
+
 
 // Cook up a unique-ish UNIX-domain socket name
 // in /var/tmp, for the coordinator.
