@@ -100,9 +100,7 @@ func (c *Coordinator)SubmitTask(args *SubmitTask, reply *SubmitTaskReply) error 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	node := c.nodeMap[args.NodeID]
-	log.Println("提交任务args",args)
 	node.mu.Lock()
-	log.Println("node 状态",node)
 
 	if node.task.taskType == TaskMapping{
 		c.reducefiles = append(c.reducefiles,args.FileName)
@@ -202,7 +200,9 @@ func (c *Coordinator) Done() bool {
 	// Your code here.
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
+	if (len(c.idleTask)+len(c.assignedTask))==0&&len(c.reducefiles)==0{
+		return true
+	}
 	return ret
 }
 

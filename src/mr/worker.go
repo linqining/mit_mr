@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 import "log"
@@ -112,41 +113,53 @@ func Worker(mapf func(string, string) []KeyValue,
 				}
 
 				if reply.TaskType == TaskReducing{
-					//intermediate := []KeyValue{}
+					intermediate := []KeyValue{}
 					for _, filename := range reply.Files {
 						ofile, _ := os.Open(filename)
 						content, err := ioutil.ReadAll(ofile)
 						if err != nil {
 							log.Fatalf("cannot read %v", filename)
 						}
-						print(string(content))
-						//output := reducef(intermediate[i].Key, values)
-
-						//kva := mapf(filename, )
-						//
-						//oname := "mr-out-0"
-						//i := 0
-						//for i < len(intermediate) {
-						//	j := i + 1
-						//	for j < len(intermediate) && intermediate[j].Key == intermediate[i].Key {
-						//		j++
-						//	}
-						//	values := []string{}
-						//	for k := i; k < j; k++ {
-						//		values = append(values, intermediate[k].Value)
-						//	}
-						//	output := reducef(intermediate[i].Key, values)
-						//
-						//	// this is the correct format for each line of Reduce output.
-						//	fmt.Fprintf(ofile, "%v %v\n", intermediate[i].Key, output)
-						//
-						//	i = j
-						//}
-
+						result := strings.Split(string(content),"\n")
+						log.Println(len(result))
+						for _,v :=range result{
+							xx := strings.Split(v," ")
+							if len(xx) == 2{
+								intermediate = append(intermediate,KeyValue{Key: xx[0],Value: xx[1]})
+							}
+						}
 						ofile.Close()
 					}
+					oname := "mr-out-0"
+					rfile, _ := os.Create(oname)
+					i := 0
+					for i < len(intermediate) {
+						j := i + 1
+						for j < len(intermediate) && intermediate[j].Key == intermediate[i].Key {
+							j++
+						}
+						values := []string{}
+						for k := i; k < j; k++ {
+							values = append(values, intermediate[k].Value)
+						}
+						output := reducef(intermediate[i].Key, values)
+
+						// this is the correct format for each line of Reduce output.
+						fmt.Fprintf(rfile, "%v %v\n", intermediate[i].Key, output)
+
+						i = j
+					}
+					submitTask := SubmitTask{
+						TaskID: reply.TaskID,
+						FileName: oname,
+						NodeID: regply.WorkerID,
+					}
+					rpy := SubmitTaskReply{}
+					err := conn.Call("Coordinator.SubmitTask",&submitTask,&rpy)
+					if err!=nil{
+						log.Println(err)
+					}
 				}
-				//ticker.Reset(time.Second)
 			}
 		}
 	}
